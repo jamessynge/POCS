@@ -28,12 +28,17 @@ def target(location):
 
 
 @pytest.fixture
+def target2(location):
+    return altaz_to_radec(obstime=current_time(), location=location, alt=55, az=135)
+
+
+@pytest.fixture
 def target_down(location):
     return altaz_to_radec(obstime=current_time(), location=location, alt=5, az=90)
 
 
 @pytest.fixture
-def pocs(target):
+def pocs(target, target2):
     try:
         del os.environ['POCSTIME']
     except KeyError:
@@ -41,16 +46,16 @@ def pocs(target):
 
     config = load_config(ignore_local=False)
 
-    pocs = POCS(simulator=['weather', 'night', 'camera'], run_once=True,
-                config=config, db='panoptes_testing', messaging=True)
+    pocs = POCS(simulator=['weather', 'night'], run_once=True,
+                config=config, db='panoptes', messaging=True)
 
     pocs.observatory.scheduler.fields_list = [
         {'name': 'Testing Target',
          'position': target.to_string(style='hmsdms'),
          'priority': '100',
          'exp_time': 2,
-         'min_nexp': 2,
-         'exp_set_size': 2,
+         'min_nexp': 1,
+         'exp_set_size': 1,
          },
     ]
 
@@ -70,10 +75,10 @@ def dome():
     yield dome
 
 
-def test_pocs_run(pocs, dome):
-    assert dome.connect() is True
-    dome.open_slit()
-    assert dome.is_open is True
+def test_pocs_run(pocs):
+    # assert dome.connect() is True
+    # dome.open_slit()
+    # assert dome.is_open is True
 
     pocs.state = 'sleeping'
     pocs._do_states = True
@@ -84,6 +89,6 @@ def test_pocs_run(pocs, dome):
     pocs.run(exit_when_done=True, run_once=True)
     assert pocs.state == 'sleeping'
 
-    dome.close_slit()
-    dome.disconnect()
-    assert dome.is_connected is False
+    # dome.close_slit()
+    # dome.disconnect()
+    # assert dome.is_connected is False

@@ -1,6 +1,9 @@
+import os
+
 from time import sleep
 
 from pocs.images import Image
+from pocs.utils import error
 
 wait_interval = 3.
 
@@ -39,15 +42,18 @@ def on_enter(event_data):
         # WARNING!! Need to do better error checking here to make sure
         # the "current" observation is actually the current observation
         pointing_metadata = pocs.db.get_current('observations')
-        pointing_image = Image(pointing_metadata['data']['file_path'])
-        pointing_image.solve_field()
+        pointing_path = pointing_metadata['data']['file_path']
 
-        pocs.logger.debug("Pointing file: {}".format(pointing_image))
+        if os.path.exists(pointing_path):
+            pointing_image = Image(pointing_metadata['data']['file_path'])
+            pointing_image.solve_field()
 
-        pocs.say("Ok, I've got the pointing picture, let's see how close we are.")
+            pocs.logger.debug("Pointing file: {}".format(pointing_image))
 
-        pocs.logger.debug("Pointing Coords: {}".format(pointing_image.pointing))
-        pocs.logger.debug("Pointing Error: {}".format(pointing_image.pointing_error))
+            pocs.say("Ok, I've got the pointing picture, let's see how close we are.")
+
+            pocs.logger.debug("Pointing Coords: {}".format(pointing_image.pointing))
+            pocs.logger.debug("Pointing Error: {}".format(pointing_image.pointing_error))
 
         # separation = pointing_image.pointing_error.magnitude.value
 
@@ -67,7 +73,10 @@ def on_enter(event_data):
         #             pocs.observatory.mount.set_target_coordinates(observation.field)
         #             pocs.observatory.mount.slew_to_target()
 
-        pocs.next_state = 'tracking'
+            pocs.next_state = 'tracking'
 
+    except error.SolveError:
+        pocs.say("Can't solve pointing image. Going forward anyway.")
+        pocs.next_state = 'tracking'
     except Exception as e:
         pocs.say("Hmm, I had a problem checking the pointing error. Sending to parking. {}".format(e))

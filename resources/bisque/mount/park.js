@@ -1,6 +1,6 @@
 /* Java Script */
 Out = '';
-sky6RASCOMTele.Asynchronous = $async;
+sky6RASCOMTele.Asynchronous = false;
 sky6RASCOMTele.Abort();
 sky6RASCOMTele.ParkAndDoNotDisconnect();
 while (!sky6RASCOMTele.IsSlewComplete) {

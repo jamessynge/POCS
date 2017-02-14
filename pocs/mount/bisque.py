@@ -93,7 +93,7 @@ class Mount(AbstractMount):
             self._at_mount_park = status['parked']
             self._is_parked = status['parked']
             # self._is_home = 'Stopped - Zero Position' in self._state
-            # self._is_tracking = status['tracking']
+            self._is_tracking = status['tracking']
             self._is_slewing = status['slewing']
 
             # self.guide_rate = int(self.query('get_guide_rate'))
@@ -256,6 +256,18 @@ class Mount(AbstractMount):
 
         return response['success']
 
+    def home_and_park(self):
+        """ Convenience method to first slew to the home position and then park.
+        """
+        if not self.is_parked:
+            self.park()
+
+            while self.is_slewing and not self.is_parked:
+                time.sleep(5)
+                self.logger.debug("Slewing to park, sleeping for 5 seconds")
+
+        self.logger.debug("Mount parked")
+
     def move_direction(self, direction='north', seconds=1.0, arcmin=None, rate=None):
         """ Move mount in specified `direction` for given amount of `seconds`
 
@@ -293,6 +305,12 @@ class Mount(AbstractMount):
         return self.theskyx.write(value)
 
     def read(self, timeout=5):
+        response = None
+        response_obj = {
+            "msg": "Command not run or no response received",
+            "success": False,
+        }
+
         while True:
             response = self.theskyx.read()
             if response is not None or timeout == 0:
@@ -301,18 +319,24 @@ class Mount(AbstractMount):
                 time.sleep(1)
                 timeout -= 1
 
-        try:
-            response_obj = json.loads(response)
-        except TypeError as e:
-            self.logger.warning("Error: {}".format(e, response))
-        except json.JSONDecodeError as e:
-            # self.logger.warning("Can't decode JSON response from mount")
-            # self.logger.warning(e)
-            # self.logger.warning(response)
-            response_obj = {
-                "response": response,
-                "success": False,
-            }
+        if response is not None:
+            try:
+                response_obj = json.loads(response)
+            except TypeError as e:
+                self.logger.warning("Error: {} {}".format(e, response))
+            except json.JSONDecodeError as e:
+                # self.logger.warning("Can't decode JSON response from mount")
+                # self.logger.warning(e)
+                # self.logger.warning(response)
+                response_obj = {
+                    "response": response,
+                    "success": False,
+                }
+            except Exception as e:
+                response_obj = {
+                    "response": response,
+                    "success": False,
+                }
 
         return response_obj
 

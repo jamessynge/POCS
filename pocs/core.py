@@ -37,7 +37,7 @@ class POCS(PanStateMachine, PanBase):
 
     """
 
-    def __init__(self, state_machine_file='simple_state_table', messaging=False, **kwargs):
+    def __init__(self, state_machine_file='panoptes', messaging=False, **kwargs):
 
         # Explicitly call the base classes in the order we want
         PanBase.__init__(self, **kwargs)
