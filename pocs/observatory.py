@@ -251,7 +251,7 @@ class Observatory(PanBase):
 
         # Take exposure with each camera
         for cam_name, camera in self.cameras.items():
-            self.logger.debug("Exposing for camera: {}".format(cam_name))
+            self.logger.debug("Exposing camera {} for {} seconds".format(cam_name, self.current_observation.exp_time))
 
             try:
                 # Start the exposures

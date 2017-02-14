@@ -1,9 +1,10 @@
 import os
 import subprocess
 
+import random
+
 from threading import Event
 from threading import Timer
-import random
 
 import numpy as np
 
@@ -75,8 +76,8 @@ class Camera(AbstractCamera):
         metadata.update(headers)
         exp_time = kwargs.get('exp_time', observation.exp_time.value)
 
+        self.logger.debug("Trimming camera simulator exposure {} s -> 0.5 s".format(exp_time))
         exp_time = 0.5
-        self.logger.debug("Trimming camera simulator exposure to 5 s")
 
         self.take_exposure(seconds=exp_time, filename=file_path)
 
@@ -160,7 +161,11 @@ class Camera(AbstractCamera):
         # Write FITS file to requested location
         if os.path.dirname(filename):
             os.makedirs(os.path.dirname(filename), mode=0o775, exist_ok=True)
-        hdu_list.writeto(filename)
+
+        try:
+            hdu_list.writeto(filename)
+        except IOError:
+            pass
 
         # Set event to mark exposure complete.
         exposure_event.set()

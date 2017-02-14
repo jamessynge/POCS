@@ -2,6 +2,7 @@ from astropy import units as u
 from collections import OrderedDict
 
 from .. import PanBase
+from ..utils import listify
 from .field import Field
 
 
@@ -43,7 +44,9 @@ class Observation(PanBase):
 
         assert isinstance(field, Field), self.logger.error("Must be a valid Field instance")
 
-        assert exp_time > 0.0, \
+        exp_time = listify(exp_time)
+
+        assert all(t > 0.0 for t in exp_time), \
             self.logger.error("Exposure time (exp_time) must be greater than 0")
 
         assert min_nexp % exp_set_size == 0, \
@@ -52,8 +55,10 @@ class Observation(PanBase):
         assert float(priority) > 0.0, self.logger.error("Priority must be 1.0 or larger")
 
         self.field = field
+        self.current_exp = 0
 
-        self.exp_time = exp_time
+        self._exp_time = exp_time
+
         self.min_nexp = min_nexp
         self.exp_set_size = exp_set_size
         self.exposure_list = OrderedDict()
@@ -65,8 +70,9 @@ class Observation(PanBase):
 
         self._seq_time = None
 
-        self.current_exp = 0
         self.merit = 0.0
+
+        self.extra_config = kwargs
 
         self.logger.debug("Observation created: {}".format(self))
 
@@ -74,6 +80,18 @@ class Observation(PanBase):
 ##################################################################################################
 # Properties
 ##################################################################################################
+
+    @property
+    def exp_time(self):
+        exp_time_index = self.current_exp % len(self._exp_time)
+        current_exp_time = self._exp_time[exp_time_index]
+
+        return current_exp_time
+
+    @exp_time.setter
+    def exp_time(self, value):
+        self._exp_time = listify(value)
+        self._exp_time_index = 0
 
     @property
     def minimum_duration(self):
@@ -172,4 +190,4 @@ class Observation(PanBase):
 
     def __str__(self):
         return "{}: {} exposures in blocks of {}, minimum {}, priority {:.0f}".format(
-            self.field, self.exp_time, self.exp_set_size, self.min_nexp, self.priority)
+            self.field, self._exp_time, self.exp_set_size, self.min_nexp, self.priority)

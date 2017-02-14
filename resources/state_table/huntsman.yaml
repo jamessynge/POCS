@@ -81,8 +81,8 @@ transitions:
         trigger: analyze
     -
         source: analyzing
-        dest: focusing
-        trigger: adjust_focus
+        dest: observing
+        trigger: observe
         conditions: mount_is_tracking
     -
         source: analyzing

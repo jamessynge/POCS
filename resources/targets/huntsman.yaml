@@ -5,3 +5,6 @@
     min_nexp: 10
     exp_set_size: 5
     hdr_mode: true
+    min_magnitude: 10
+    max_magnitude: 20
+    max_exptime: 300

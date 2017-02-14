@@ -19,15 +19,20 @@ def on_enter(event_data):
 
             pocs.logger.debug("Getting exposure times from imager array")
 
+            min_magnitude = current_observation.extra_config.get('min_magnitude', 10) * u.ABmag
+            max_magnitude = current_observation.extra_config.get('max_magnitude', 20) * u.ABmag
+            max_exptime = current_observation.extra_config.get('max_exptime', 300) * u.second
+
             # Generating a list of exposure times for the imager array
             exp_times = pocs.observatory.imager_array.exposure_time_array(
-                minimum_magnitude=10 * u.ABmag,
+                minimum_magnitude=min_magnitude,
+                maximum_exptime=max_exptime,
+                maximum_magnitude=max_magnitude,
                 num_longexp=1,
                 factor=2,
-                maximum_exptime=300 * u.second,
-                maximum_magnitude=20 * u.ABmag
             )
             pocs.say("Exposure times: {}".format(exp_times))
+            current_observation.exp_time = exp_times
 
             pocs.next_state = 'slewing'
 
