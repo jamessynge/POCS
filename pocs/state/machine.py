@@ -7,13 +7,14 @@ from ..utils import error
 from ..utils import listify
 from ..utils import load_module
 
-can_graph = False
-try:  # pragma: no cover
-    import pygraphviz
-    from transitions.extensions import GraphMachine as Machine
-    can_graph = True
-except ImportError:  # pragma: no cover
-    from transitions import Machine
+# can_graph = False
+# try:  # pragma: no cover
+import pygraphviz
+
+from transitions.extensions import GraphMachine as Machine
+can_graph = True
+# except ImportError:  # pragma: no cover
+# from transitions import Machine
 
 
 class PanStateMachine(Machine):

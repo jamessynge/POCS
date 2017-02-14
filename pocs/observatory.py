@@ -17,6 +17,7 @@ from .scheduler.constraint import Duration
 from .scheduler.constraint import MoonAvoidance
 from .utils import current_time
 from .utils import error
+from .utils import hdr
 from .utils import images as img_utils
 from .utils import list_connected_cameras
 from .utils import load_module
@@ -52,6 +53,13 @@ class Observatory(PanBase):
         self.logger.info('\tSetting up scheduler')
         self.scheduler = None
         self._create_scheduler()
+
+        self._has_hdr_mode = kwargs.get('hdr_mode', False)
+
+        # Creating an imager array object
+        if self.has_hdr_mode:
+            self.logger.info('\tSetting up HDR imager array')
+            self.imager_array = hdr.create_imager_array()
 
         self.offset_info = None
 
@@ -95,6 +103,15 @@ class Observatory(PanBase):
     @current_observation.setter
     def current_observation(self, new_observation):
         self.scheduler.current_observation = new_observation
+
+    @property
+    def has_hdr_mode(self):
+        """ Does camera support HDR mode
+
+        Returns:
+            bool: HDR enabled, default False
+        """
+        return self._has_hdr_mode
 
 
 ##################################################################################################
