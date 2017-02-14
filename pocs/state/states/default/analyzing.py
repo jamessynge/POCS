@@ -6,10 +6,15 @@ def on_enter(event_data):
 
     pocs.say("Analyzing image {} / {}".format(observation.current_exp, observation.min_nexp))
 
-    pocs.next_state = 'focusing'
+    pocs.next_state = 'observing'
     try:
 
         pocs.observatory.analyze_recent()
+
+        # Check if we need to reschedule
+        if pocs.force_reschedule:
+            pocs.say("Forcing a scheduler check")
+            pocs.next_state = 'scheduling'
 
         # Check for minimum number of exposures
         if observation.current_exp >= observation.min_nexp:

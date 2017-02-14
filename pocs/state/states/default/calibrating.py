@@ -12,5 +12,7 @@ def on_enter(event_data):
 
         # TODO
 
+        pocs.next_state = 'scheduling'
+
     except Exception as e:
         pocs.logger.warning("Problem with flat-fielding: {}".format(e))

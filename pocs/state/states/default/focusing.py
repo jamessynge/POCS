@@ -29,5 +29,7 @@ def on_enter(event_data):
             sleep(wait_interval)
             wait_time += wait_interval
 
+        pocs.next_state = 'observing'
+
     except Exception as e:
         pocs.logger.warning("Problem with focusing: {}".format(e))

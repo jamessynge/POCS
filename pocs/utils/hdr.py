@@ -1,15 +1,16 @@
-import sys
-sys.path.append('../../')
-from pocs.utils import signal_to_noise as snr
-from pocs.utils import random_dither
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from pocs.utils import random_dither
+from pocs.utils import signal_to_noise as snr
 from pocs.utils.config import load_config
-config = load_config('performance')
-import os
+from warnings import warn
+
+dither_functions = {'dice_9': random_dither.dither_dice9, 'dice_5': random_dither.dither_dice5}
 
 
 def create_imager_array():
+    config = load_config('performance')
+
     optics = dict()
     cameras = dict()
     filters = dict()
@@ -68,37 +69,42 @@ def create_imager_array():
             # Put in cache
             psfs[psf_name] = psf
 
-        imager = snr.Imager(optic, camera, filter, imager_info.get('num_imagers', 1), imager_info.get('num_computer', 1), psf)
+        imager = snr.Imager(optic, camera, filter, imager_info.get(
+            'num_imagers', 1), imager_info.get('num_computer', 1), psf)
         imagers_list.append(imager)
     imager_array = snr.ImagerArray(imagers_list)
     return imager_array
 
-imager_array = create_imager_array()
 
-dither_functions = {'dice_9': random_dither.dither_dice9, 'dice_5': random_dither.dither_dice5}
+def get_hdr_target_list(imager_array=None, coords=None, name=None, minimum_magnitude=10 * u.ABmag, num_longexp=1,
+                        dither_function='dice_9',
+                        dither_parameters={'big_offset': 0.5 * u.degree, 'small_offset': 0.1 * u.degree}, factor=2,
+                        maximum_exptime=300 * u.second, priority=100, maximum_magnitude=None):
+    if not isinstance(coords, SkyCoord):
+        coords = SkyCoord(coords)
 
-
-def HDR_target_list(ra_dec, name, minimum_magnitude, num_longexp = 1, dither_function=random_dither.dither_dice9,
-                    dither_parameters={'big_offset': 0.5 * u.degree, 'small_offset': 0.1 * u.degree}, factor=2,
-                    maximum_exptime=300 * u.second, priority=100, maximum_magnitude = None):
-    if not isinstance(ra_dec, SkyCoord):
-        ra_dec = SkyCoord(ra_dec)
     try:
         dither = dither_functions[dither_function]
     except KeyError:
-        dither = dither_function
-    explist = imager_array.exposure_time_array(minimum_magnitude = minimum_magnitude, num_longexp = num_longexp, factor =
-                                               factor, maximum_exptime = maximum_exptime, maximum_magnitude =
-                                               maximum_magnitude)
+        warn("Invalid dither given: {}".format(dither_function))
+
+    explist = imager_array.exposure_time_array(
+        minimum_magnitude=minimum_magnitude,
+        num_longexp=num_longexp,
+        factor=factor,
+        maximum_exptime=maximum_exptime,
+        maximum_magnitude=maximum_magnitude)
+
     target_list = []
-    position_list = dither_function(ra_dec, **dither_parameters, loop=len(explist))
+    position_list = dither(coords, dither_parameters['big_offset'], loop=len(explist))
+
     for i in range(0, len(explist)):
         target = {}
-        if ra_dec.obstime is not None:
-            target['epoch'] = ra_dec.obstime
-        if ra_dec.equinox is not None:
-            target['equinox'] = ra_dec.equinox
-        target['frame'] = ra_dec.frame.name
+        if coords.obstime is not None:
+            target['epoch'] = coords.obstime
+        if coords.equinox is not None:
+            target['equinox'] = coords.equinox
+        target['frame'] = coords.frame.name
         target['name'] = name
         target['position'] = position_list[i].to_string('hmsdms')
         target['priority'] = priority

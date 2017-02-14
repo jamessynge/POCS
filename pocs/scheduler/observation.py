@@ -144,6 +144,9 @@ class Observation(PanBase):
         except IndexError:
             self.logger.warning("No exposure available")
 
+    @property
+    def hdr_mode(self):
+        return self.extra_config.get('hdr_mode', False)
 
 ##################################################################################################
 # Methods
