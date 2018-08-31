@@ -1,5 +1,6 @@
 from astroplan import FixedTarget
 from astropy.coordinates import SkyCoord
+import astropy.units as u
 
 from pocs.base import PanBase
 
@@ -16,7 +17,7 @@ class Field(FixedTarget, PanBase):
             name {str} -- Name of the field, typically the name of object at
                 center `position`
             position {str} -- Center of field, can be anything accepted by
-                `~astropy.coordinates.SkyCoord`
+                `~astropy.coordinates.SkyCoord` as hourangle and degrees.
             **kwargs {dict} -- Additional keywords to be passed to
                 `astroplan.ObservingBlock`
 
@@ -26,8 +27,9 @@ class Field(FixedTarget, PanBase):
         # Force an equinox
         if equinox is None:
             equinox = 'J2000'
+        coord = SkyCoord(position, equinox=equinox, frame='icrs', unit=[u.hourangle, u.degree])
 
-        super().__init__(SkyCoord(position, equinox=equinox, frame='icrs'), name=name, **kwargs)
+        super().__init__(coord, name=name, **kwargs)
 
         self._field_name = self.name.title().replace(' ', '').replace('-', '')
         if not self._field_name:
