@@ -56,6 +56,7 @@ echo "Running ${BASH_SOURCE[0]} at $(date)"
 echo "Current dir: $(pwd)"
 echo "Current user: $(whoami)"
 echo "USER: ${USER}"
+echo "HOME: ${HOME}"
 echo "LOGNAME: ${LOGNAME}"
 echo "PATH: ${PATH}"
 echo "PANUSER: ${PANUSER}"
@@ -70,6 +71,14 @@ echo "PIAA: ${PIAA}"
 echo 'Shell options ($-):' "$-"
 
 set -x
+
+# Is automated startup of PANOPTES software enabled?
+if [ ! -f "${HOME}/AUTOMATED-PANOPTES-STARTUP-ENABLED" ] ; then
+  echo "Did not find ${HOME}/AUTOMATED-PANOPTES-STARTUP-ENABLED file at $(date)."
+  echo
+  echo "Disabled automated running of $(pwd)/start_panoptes_in_tmux.sh."
+  exit
+fi
 
 # Finally, the point of this script: create a detached (-d) tmux session
 # called panoptes (-s), with a scrollback buffer of 5000 lines, where
