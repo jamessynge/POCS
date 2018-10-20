@@ -1,0 +1,8 @@
+If the file $HOME/AUTOMATED-RUN-POCS-ENABLED exists,
+then $POCS/scripts/startup/start_pocs.sh will automatically
+execute the run_pocs command inside $POCS/bin/pocs_shell.
+
+To disable the automatic action, simply rename this file
+to $HOME/AUTOMATED-RUN-POCS-ENABLED.disabled until you are
+are ready for the automatic execution of POCS to resume.
+

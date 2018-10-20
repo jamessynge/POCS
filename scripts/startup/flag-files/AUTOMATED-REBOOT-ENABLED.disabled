@@ -1,0 +1,9 @@
+If the file $HOME/AUTOMATED-REBOOT-ENABLED exists, then
+then $HOME/bin/reboot-if-pocs-not-logging.sh will test
+whether POCS has been updating its log file. If not,
+it will reboot the system.
+
+To disable the automatic reboot, simply rename this file
+to $HOME/AUTOMATED-REBOOT-ENABLED.disabled until you are
+are ready for the automatic rebooting to resume.
+ 

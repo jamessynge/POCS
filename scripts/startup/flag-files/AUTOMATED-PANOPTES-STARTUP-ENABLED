@@ -1,0 +1,17 @@
+If the file $HOME/AUTOMATED-PANOPTES-STARTUP-ENABLED exists,
+then $POCS/scripts/startup/tmux_launch.sh will automatically
+run $POCS/scripts/startup/startu_panoptes_in_tmux.sh, which
+in turn will start various programs involved in running a
+PANOPTES automated observatory.
+
+Note that this is conditional on tmux_launch.sh being executed,
+which is normally handled by adding the following to the crontab
+of the panoptes user:
+
+# m h  dom mon dow   command
+@reboot              /bin/bash --login $POCS/scripts/startup/tmux_launch.sh >> $PANLOG/tmux_launch.cron-reboot.log 2>&1
+
+To disable the automatic action, simply rename this file
+to $HOME/AUTOMATED-SETUP-POCS-ENABLED.disabled until you are
+are ready for the automatic setup of POCS to resume.
+
