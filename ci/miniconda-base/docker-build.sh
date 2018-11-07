@@ -6,6 +6,8 @@
 #       $POCS/scripts/install/run-apt-cache-ng-in-docker.sh
 #       APT_PROXY_PORT=3142 ./docker-build.sh
 
+[ -d "${POCS}" ] || (echo "POCS is not defined!" && exit 1)
+
 THIS_DIR="$(dirname "$(readlink -f "${0}")")"
 
 # To make it easier to copy this file into multiple
@@ -25,17 +27,25 @@ if [ "$1" == "--as-me" -a "${CURRENT_USER}" != "root" ] ; then
   CMD+=" --build-arg pan_group=$(id -g -n)"
   CMD+=" --build-arg pan_group_id=$(id -g)"
 elif [ "$1" == "--as-panoptes" ] ; then
+  PANOPTES_USER="$(id -u -n panoptes 2>/dev/null || /bin/true)"
+  if [ -z "${PANOPTES_USER}" ] ; then
+    echo "There is no 'panoptes' user!"
+    exit 1
+  fi
   TAG_BASE="panoptes-panoptes"
   CMD+=" --build-arg pan_user=$(id -u -n panoptes)"
   CMD+=" --build-arg pan_user_id=$(id -u panoptes)"
   CMD+=" --build-arg pan_group=$(id -g -n panoptes)"
   CMD+=" --build-arg pan_group_id=$(id -g panoptes)"
-else
+elif [ "$1" == "" -o "$1" == "--as-root" ] ; then
   TAG_BASE="panoptes"
   CMD+=" --build-arg pan_user=root"
   CMD+=" --build-arg pan_user_id="
   CMD+=" --build-arg pan_group="
   CMD+=" --build-arg pan_group_id="
+else
+  echo "Unknown option: $1"
+  exit 1
 fi
 
 TAG="${TAG_BASE}/${THIS_LEAF_DIR}"

@@ -2,6 +2,8 @@
 # Build with:
 #
 #         ./docker-build.sh
+#
+# Note that specifying a group by ID only (pan_group_id) won't work properly.
 
 FROM debian:stable-slim as build-env
 
@@ -31,26 +33,33 @@ ENV APT_PROXY_PORT $apt_proxy_port
 WORKDIR /workdir
 
 ################################################################################
+# Create user PANUSER. We don't set PANUSER on the command line because it is
+# already in the environment.
+
+COPY create-panoptes-user.sh .
+RUN PANUSER_ID=$pan_user_id  PANGROUP=$pan_group PANGROUP_ID=$pan_group_id \
+    NO_PASSWORD=true ./create-panoptes-user.sh && rm create-panoptes-user.sh
+
+################################################################################
 # If there is an apt caching proxy running, tell apt where to find it. Note
 # that this persists in an /etc/apt/... file, so isn't dependent on the ARG
 # in the future, for good or ill.
+
 COPY detect-apt-cache.sh .
 RUN APT_PROXY_PORT=$apt_proxy_port ./detect-apt-cache.sh && \
     rm detect-apt-cache.sh
 
 ################################################################################
-# Install tools needed in order to *install* or run miniconda.
+# Install linux packages needed in order to *install* or run miniconda.
 
 COPY run_phase_1_apt_deps.sh .
 RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
 
 ################################################################################
-# Create user PANUSER.
+# Make the directory to be owned by PANUSER.
 
-COPY create-panoptes-user.sh .
-RUN PANUSER=$pan_user PANUSER_ID=$pan_user_id \
-    PANGROUP=$pan_group PANGROUP_ID=$pan_group_id \
-    ./create-panoptes-user.sh && rm create-panoptes-user.sh
+COPY run_phase_2_create_pandir.sh .
+RUN PANGROUP=$pan_group ./run_phase_2_create_pandir.sh && rm run_phase_2_create_pandir.sh
 
 RUN exit 1
 
