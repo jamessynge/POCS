@@ -60,6 +60,8 @@ RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
 
 COPY run_phase_2_create_pandir.sh .
 RUN PANGROUP=$pan_group ./run_phase_2_create_pandir.sh && rm run_phase_2_create_pandir.sh
+RUN ls -ld $PANDIR
+RUN ls -l $PANDIR
 
 ################################################################################
 # Cleanup the workdir used as user root, switch to operating as PANUSER in
@@ -72,7 +74,10 @@ WORKDIR /var/panoptes
 ################################################################################
 # As PANUSER, install miniconda, but no additional packages.
 
+RUN ls -la
+
 COPY run_phase_3_miniconda_base.sh .
+RUN ls -la
 RUN ./run_phase_3_miniconda_base.sh && rm run_phase_3_miniconda_base.sh
 
 RUN exit 1
