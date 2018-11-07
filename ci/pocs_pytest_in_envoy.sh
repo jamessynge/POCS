@@ -5,7 +5,7 @@
 #   --env   Export an environment variable to the program running in the container.
 #   --volume  Bind mount a volume 
 
-IMAGE_TO_RUN="panoptes/full-dependencies"
+IMAGE_TO_RUN="panoptes/local-image"
 
 # We run as root and later drop permissions. This is required to setup the USER
 # in useradd below, which is need for correct Python execution in the Docker

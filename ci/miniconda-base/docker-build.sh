@@ -6,34 +6,43 @@
 #       $POCS/scripts/install/run-apt-cache-ng-in-docker.sh
 #       APT_PROXY_PORT=3142 ./docker-build.sh
 
-
-CMD="docker build --build-arg apt_proxy_port=$APT_PROXY_PORT"
-
-if [ "$1" == "--as-me" ] ; then
-  OWNER="$(id -u -n)"
-  TAG_BASE="panoptes-${OWNER}"
-elif [ "$1" == "--as-panoptes" ] ; then
-  OWNER="panoptes"
-  TAG_BASE="panoptes-${OWNER}"
-else
-  OWNER="root"
-  TAG_BASE="panoptes-root"
-fi
-
-if [ $OWNER != root ] ; then
-  CMD+=" --build-arg user_name
-
-
-
-
 THIS_DIR="$(dirname "$(readlink -f "${0}")")"
 
 # To make it easier to copy this file into multiple
 # directories, we generate the image name (tag) from
 # the name of the leaf directory.
 THIS_LEAF_DIR="$(basename "${THIS_DIR}")"
-TAG="panoptes/${THIS_LEAF_DIR}"
 
+# Build the core of the command.
+
+CMD="docker build --build-arg apt_proxy_port=$APT_PROXY_PORT"
+
+CURRENT_USER="$(id -u -n)"
+if [ "$1" == "--as-me" -a "${CURRENT_USER}" != "root" ] ; then
+  TAG_BASE="panoptes-${CURRENT_USER}"
+  CMD+=" --build-arg pan_user=$CURRENT_USER"
+  CMD+=" --build-arg pan_user_id=$(id -u)"
+  CMD+=" --build-arg pan_group=$(id -g -n)"
+  CMD+=" --build-arg pan_group_id=$(id -g)"
+elif [ "$1" == "--as-panoptes" ] ; then
+  TAG_BASE="panoptes-panoptes"
+  CMD+=" --build-arg pan_user=$(id -u -n panoptes)"
+  CMD+=" --build-arg pan_user_id=$(id -u panoptes)"
+  CMD+=" --build-arg pan_group=$(id -g -n panoptes)"
+  CMD+=" --build-arg pan_group_id=$(id -g panoptes)"
+else
+  TAG_BASE="panoptes"
+  CMD+=" --build-arg pan_user=root"
+  CMD+=" --build-arg pan_user_id="
+  CMD+=" --build-arg pan_group="
+  CMD+=" --build-arg pan_group_id="
+fi
+
+TAG="${TAG_BASE}/${THIS_LEAF_DIR}"
+
+# Create a temporary directory into which to copy the context for the
+# docker build command, and arrange for that directory to be cleaned up
+# at the end of this script.
 timestamp="$(date "+%Y%m%d.%H%M%S")"
 temp_dir=$(mktemp --tmpdir --directory docker-build.${THIS_LEAF_DIR}.${timestamp}.XXXX)
 function clean_temp_dir {
@@ -51,18 +60,4 @@ cp -t "${temp_dir}" \
 
 echo "Building docker image: ${TAG}"
 
-CMD="docker build --build-arg apt_proxy_port=$APT_PROXY_PORT"
-if [ "$1" == -
-
-
-
-\
-  --tag "${TAG}" \
-  --file "${THIS_DIR}"/Dockerfile -- "${temp_dir}"
-
-
-
-docker build \
-  --build-arg apt_proxy_port=$APT_PROXY_PORT \
-  --tag "${TAG}" \
-  --file "${THIS_DIR}"/Dockerfile -- "${temp_dir}"
+$CMD --tag "${TAG}" --file "${THIS_DIR}"/Dockerfile -- "${temp_dir}"

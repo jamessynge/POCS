@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 #
 # Create the user that will own /var/panoptes and will execute the
-# panoptes software. The user must not already exist. Minimal usage:
+# panoptes software. Minimal usage:
 #
 #    PANUSER=panoptes ./create-panoptes-user.sh
 #
@@ -19,38 +19,41 @@ fi
 
 if [ $PANUSER == $(id -u -n) ] ; then
   echo "PANUSER ($PANUSER) is the current user, so already exists."
+  exit 0
+fi
+
+user_id=$(id -u $PANUSER 2> /dev/null)
+
+if [ -n $user_id ] ; then
+  echo "PANUSER ($PANUSER) already exists with UID $user_id."
   exit 1
 fi
 
-if [ $PANUSER == $(id -u $PANUSER) ] ; then
-  echo "PANUSER ($PANUSER) already exists."
-  exit 1
+if [ -n $PANGROUP -a $PANGROUP != $PANUSER ] ; then
+  # We're supposed to create a group and it doesn't have the same name
+  # as the user, so it won't happen automatically.
+
+  if [ -n $PANGROUP_ID ] ; then
+    # The caller provided a group id.
+    addgroup --debug --gid $PANGROUP_ID $PANGROUP
+  else
+    addgroup --debug $PANGROUP
+    PANGROUP_ID=$(id -g $PANGROUP)
+  fi
 fi
 
+CMD="adduser --debug"
+CMD+=" --home /home/$PANUSER"
+CMD+=" --shell /bin/bash"
+CMD+=" --add_extra_groups"
+if [ -n $PANUSER_ID ] ; then
+  CMD+=" --uid $PANUSER_ID"
+fi
 if [ -n $PANGROUP ] ; then
-  
+  CMD+=" --ingroup $PANGROUP"
+elif [ -n $PANGROUP_ID ] ; then
+  CMD+=" --gid $PANGROUP_ID"
+fi
+CMD+=" $PANUSER"
 
-
-if [ $PANUSER != $user_name ] ; then 
-    echo "PANUSER ($PANUSER) doesn't match user_name ($user_name)"
-    exit 1
-  fi
-  if [ -z $group_name ] ; then
-    echo "group_name is not set!"
-    exit 1
-  fi
-  if [ -z $group_id ] ; then
-    echo "group_id is not set!"
-    exit 1
-  fi
-
-  groupadd -g $group_id $group_name
-
-  if [ -z $user_name ] ; then
-    echo "user_name is not set!"
-    exit 1
-  fi
-  if [ -z $user_id ] ; then
-    echo "user_id is not set!"
-    exit 1
-  fi
+$CMD

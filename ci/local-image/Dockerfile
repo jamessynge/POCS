@@ -8,18 +8,19 @@ ARG group_name=
 ARG group_id=
 
 RUN groupadd -g $group_id $group_name && \
-    useradd -u $user_id -g $group_id -d /home/$user_name $user_name && \
-    echo "Changing ownership of $PANDIR from root to $user_name, which is REALLY slow."
+    useradd -u $user_id -g $group_id -d /home/$user_name -m $user_name && \
+    echo "Changing ownership of $PANDIR from root to $user_name, which is slow."
+RUN date && chown -R $user_id:$group_id $PANDIR && date
 # James measured this as 38 minutes on his laptop.
 # This makes it likely that we need some ability to choose the user and
 # group that execute the miniconda install.
-RUN date && chown -R $user_id:$group_id $PANDIR && date
 
 USER $user_id:$group_id
 
 WORKDIR /home/$user_name
 
 # Make sure expected files exist.
+RUN ls -la
 RUN [ -f .bashrc ]
 RUN [ -f "${PANDIR}/set-panoptes-env.sh" ]
 

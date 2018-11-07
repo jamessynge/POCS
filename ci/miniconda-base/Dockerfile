@@ -12,19 +12,15 @@ LABEL url="https://github.com/panoptes/POCS"
 ARG apt_proxy_port=
 ARG pan_dir=/var/panoptes
 ARG pan_user=root
-ARG pan_user_id=0
-ARG pan_group=root
-ARG pan_group_id=0
+ARG pan_user_id=
+ARG pan_group=
+ARG pan_group_id=
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV ENV /root/.bashrc
 ENV SHELL /bin/bash
 ENV PANDIR $pan_dir
-ENV PANLOG $PANDIR/logs
-ENV POCS $PANDIR/POCS
-ENV PAWS $PANDIR/PAWS
 ENV PANUSER $pan_user
-ENV SOLVE_FIELD /usr/bin/solve-field
 ENV APT_PROXY_PORT $apt_proxy_port
 
 # Testing script, should you need it.
@@ -43,11 +39,25 @@ RUN APT_PROXY_PORT=$apt_proxy_port ./detect-apt-cache.sh && \
     rm detect-apt-cache.sh
 
 ################################################################################
-# Install well established, relatively stable dependencies first so that docker
-# build caching will create a layer with these items.
+# Install tools needed in order to *install* or run miniconda.
 
 COPY run_phase_1_apt_deps.sh .
 RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
+
+################################################################################
+# Create user PANUSER.
+
+COPY create-panoptes-user.sh
+RUN PANUSER=$pan_user PANUSER_ID=$pan_user_id \
+    PANGROUP=$pan_group PANGROUP_ID=$pan_group_id \
+    ./create-panoptes-user.sh && rm create-panoptes-user.sh
+
+RUN exit 1
+
+COPY detect-apt-cache.sh .
+RUN APT_PROXY_PORT=$apt_proxy_port ./detect-apt-cache.sh && \
+    rm detect-apt-cache.sh
+
 
 ################################################################################
 # Now install dependencies that are more likely to change (both the actual list
