@@ -47,7 +47,7 @@ RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
 ################################################################################
 # Create user PANUSER.
 
-COPY create-panoptes-user.sh
+COPY create-panoptes-user.sh .
 RUN PANUSER=$pan_user PANUSER_ID=$pan_user_id \
     PANGROUP=$pan_group PANGROUP_ID=$pan_group_id \
     ./create-panoptes-user.sh && rm create-panoptes-user.sh

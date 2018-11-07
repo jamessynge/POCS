@@ -23,7 +23,6 @@ trap clean_temp_dir EXIT
 
 echo "Creating docker build context in ${temp_dir}"
 
-THIS_DIR="$(dirname "$(readlink -f "${0}")")"
 cp -t "${temp_dir}" \
   "${POCS}"/requirements.txt \
   "${THIS_DIR}"/run_* \
