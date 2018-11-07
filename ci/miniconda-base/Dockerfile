@@ -61,12 +61,21 @@ RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
 COPY run_phase_2_create_pandir.sh .
 RUN PANGROUP=$pan_group ./run_phase_2_create_pandir.sh && rm run_phase_2_create_pandir.sh
 
+################################################################################
+# Cleanup the workdir used as user root, switch to operating as PANUSER in
+# /var/panoptes.
+
+RUN rm -rf /workdir
+USER $PANUSER
+WORKDIR /var/panoptes
+
+################################################################################
+# As PANUSER, install miniconda, but no additional packages.
+
+COPY run_phase_3_miniconda_base.sh .
+RUN ./run_phase_3_miniconda_base.sh && rm run_phase_3_miniconda_base.sh
+
 RUN exit 1
-
-COPY detect-apt-cache.sh .
-RUN APT_PROXY_PORT=$apt_proxy_port ./detect-apt-cache.sh && \
-    rm detect-apt-cache.sh
-
 
 ################################################################################
 # Now install dependencies that are more likely to change (both the actual list
