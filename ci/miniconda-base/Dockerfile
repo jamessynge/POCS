@@ -23,58 +23,81 @@ ENV ENV /root/.bashrc
 ENV SHELL /bin/bash
 ENV PANDIR $pan_dir
 ENV PANUSER $pan_user
-ENV APT_PROXY_PORT $apt_proxy_port
-
-# Testing script, should you need it.
-# COPY run_phase_0_test.sh .
-# RUN ./run_phase_0_test.sh && rm run_phase_0_test.sh && exit 1
+ENV CONDA_INSTALL_DIR ${PANDIR}/miniconda
+ENV CONDA_SH ${CONDA_INSTALL_DIR}/etc/profile.d/conda.s
 
 # Set the WORKDIR to a directory we can blow away at the end.
 WORKDIR /workdir
 
-################################################################################
-# Create user PANUSER. We don't set PANUSER on the command line because it is
-# already in the environment.
-
-COPY create-panoptes-user.sh .
-RUN PANUSER_ID=$pan_user_id  PANGROUP=$pan_group PANGROUP_ID=$pan_group_id \
-    NO_PASSWORD=true ./create-panoptes-user.sh && rm create-panoptes-user.sh
+# Testing script, should you need it.
+# COPY run_phase_0_test.sh /workdir/
+# RUN /workdir/run_phase_0_test.sh && \
+#     rm -rf /workdir
 
 ################################################################################
 # If there is an apt caching proxy running, tell apt where to find it. Note
 # that this persists in an /etc/apt/... file, so isn't dependent on the ARG
 # in the future, for good or ill.
 
-COPY detect-apt-cache.sh .
-RUN APT_PROXY_PORT=$apt_proxy_port ./detect-apt-cache.sh && \
-    rm detect-apt-cache.sh
+COPY detect-apt-cache.sh /workdir/
+RUN APT_PROXY_PORT=$apt_proxy_port /workdir/detect-apt-cache.sh && \
+    rm -rf /workdir
 
 ################################################################################
 # Install linux packages needed in order to *install* or run miniconda.
 
-COPY run_phase_1_apt_deps.sh .
-RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
+COPY run_phase_1_apt_deps.sh /workdir/
+RUN /workdir/run_phase_1_apt_deps.sh && \
+    rm -rf /workdir
+
+################################################################################
+# Create user PANUSER.
+
+COPY create-panoptes-user.sh /workdir/
+RUN PANUSER=$pan_user PANUSER_ID=$pan_user_id \
+    PANGROUP=$pan_group PANGROUP_ID=$pan_group_id NO_PASSWORD=true \
+    /workdir/create-panoptes-user.sh && \
+    rm -rf /workdir
 
 ################################################################################
 # Make the directory to be owned by PANUSER.
 
-COPY run_phase_2_create_pandir.sh .
-RUN PANGROUP=$pan_group ./run_phase_2_create_pandir.sh && rm run_phase_2_create_pandir.sh
+COPY run_phase_2_create_pandir.sh /workdir/
+RUN PANGROUP=$pan_group /workdir/run_phase_2_create_pandir.sh && \
+    rm -rf /workdir
 
 ################################################################################
-# Cleanup the workdir used as user root, switch to operating as PANUSER in
-# /var/panoptes. Note that COPY does so as root:root unless you tell it
-# otherwise.
-
-RUN rm -rf /workdir
-USER $PANUSER
-WORKDIR /var/panoptes
-
+# COPY does so as root:root unless you tell it otherwise, and COPY doesn't
+# expand ARG or ENV values, so literals are required. This means that we can't
+# substitute $pan_user or $PANUSER into the COPY command, so this means that
+# COPY will only produce files owned by root:root in our scenario. We could
+# copy all of the files from the context into the WORKDIR at once and change
+# the ownership of all files, but that means that changing any file in the
+# context causes the COPY layer to be different, so caching fails.
+#
+# Therefore we are copying just the files we need here, then changing ownership
+# and user. A macro could be useful here. Or just wait until things are stable
+# and collapse operations into a very few scripts.
 ################################################################################
+
 # As PANUSER, install miniconda, but no additional packages.
 
-COPY --chown=$pan_user:$pan_group run_phase_3_miniconda_base.sh .
-RUN ./run_phase_3_miniconda_base.sh && rm run_phase_3_miniconda_base.sh
+USER root
+COPY run_phase_3_miniconda_base.sh /workdir/
+RUN chown -R $pan_user:$pan_group /workdir
+USER $PANUSER
+RUN /workdir/run_phase_3_miniconda_base.sh
+USER root
+RUN rm -rf /workdir
+
+# Create the panoptes environment.
+COPY run_phase_4_miniconda_env.sh /workdir/
+RUN chown -R $pan_user:$pan_group /workdir
+USER $PANUSER
+RUN /workdir/run_phase_4_miniconda_env.sh
+USER root
+RUN rm -rf /workdir
+
 
 RUN exit 1
 

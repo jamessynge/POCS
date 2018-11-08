@@ -1,8 +1,12 @@
 #!/bin/bash -ex
 
-# Install miniconda, but no additional packages, into PANDIR.
+source "${CONDA_SH}"
+conda info
+conda config --show channels
+conda config --prepend channels astropy
+conda config --append channels conda-forge
 
-# TODO(james): Figure out how to setup a caching proxy that works with wget.
+exit 1
 
 echo
 echo "Installing miniconda. License at: https://conda.io/docs/license.html"
@@ -12,3 +16,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 -O "${the_script}"
 bash "${the_script}" -b -p "${CONDA_INSTALL_DIR}"
 rm "${the_script}"
+
+# Check that things are working
+
+source ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh

@@ -30,9 +30,8 @@ if [ -n "$user_id" ] ; then
   exit 1
 fi
 
-if [ -n $PANGROUP -a $PANGROUP != $PANUSER ] ; then
-  # We're supposed to create a group and it doesn't have the same name
-  # as the user, so it won't happen automatically.
+if [ -n $PANGROUP ] ; then
+  # NOT testing if the group exists.
   if [ -n $PANGROUP_ID ] ; then
     # The caller provided a group id.
     addgroup --debug --gid $PANGROUP_ID $PANGROUP
@@ -40,7 +39,7 @@ if [ -n $PANGROUP -a $PANGROUP != $PANUSER ] ; then
     addgroup --debug $PANGROUP
     PANGROUP_ID=$(id -g $PANGROUP)
   fi
-elif [ -z "$PANGROUP" -a -n "$PANGROUP_ID" ] ; then
+elif [ -n "$PANGROUP_ID" ] ; then
   echo "Specifying only the group id and not group name is not supported."
   exit 1
 fi
