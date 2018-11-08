@@ -3,7 +3,5 @@
 # The alternative is to trust that pip will install it from a good location.
 
 codecov
-coveralls
 dateparser
-matplotlib >= 2.0.0,<3.0.0
 tweepy

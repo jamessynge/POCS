@@ -12,3 +12,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 -O "${the_script}"
 bash "${the_script}" -b -p "${CONDA_INSTALL_DIR}"
 rm "${the_script}"
+
+source "${CONDA_SH}"
+conda info
+conda update -n base --all

@@ -24,7 +24,7 @@ ENV SHELL /bin/bash
 ENV PANDIR $pan_dir
 ENV PANUSER $pan_user
 ENV CONDA_INSTALL_DIR ${PANDIR}/miniconda
-ENV CONDA_SH ${CONDA_INSTALL_DIR}/etc/profile.d/conda.s
+ENV CONDA_SH ${CONDA_INSTALL_DIR}/etc/profile.d/conda.sh
 
 # Set the WORKDIR to a directory we can blow away at the end.
 WORKDIR /workdir
@@ -86,15 +86,34 @@ USER root
 COPY run_phase_3_miniconda_base.sh /workdir/
 RUN chown -R $pan_user:$pan_group /workdir
 USER $PANUSER
-RUN /workdir/run_phase_3_miniconda_base.sh
+RUN APT_PROXY_PORT=$apt_proxy_port /workdir/run_phase_3_miniconda_base.sh
 USER root
 RUN rm -rf /workdir
 
 # Create the panoptes environment.
-COPY run_phase_4_miniconda_env.sh /workdir/
+
+COPY run_phase_4_bare_panoptes_env.sh /workdir/
 RUN chown -R $pan_user:$pan_group /workdir
 USER $PANUSER
-RUN /workdir/run_phase_4_miniconda_env.sh
+RUN /workdir/run_phase_4_bare_panoptes_env.sh
+USER root
+RUN rm -rf /workdir
+
+# Load the panoptes environment with packages.
+
+COPY run_phase_5_grow_panoptes_env.sh *.conda-channel-packages.txt /workdir/
+RUN chown -R $pan_user:$pan_group /workdir
+USER $PANUSER
+RUN /workdir/run_phase_5_grow_panoptes_env.sh
+USER root
+RUN rm -rf /workdir
+
+# Remove tarballs and package versions downloaded but not in use.
+
+COPY run_phase_6_conda_clean.sh /workdir/
+RUN chown -R $pan_user:$pan_group /workdir
+USER $PANUSER
+RUN /workdir/run_phase_6_conda_clean.sh
 USER root
 RUN rm -rf /workdir
 
