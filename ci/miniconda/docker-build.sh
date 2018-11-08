@@ -67,3 +67,6 @@ cp -t "${temp_dir}" \
 echo "Building docker image: ${TAG}"
 
 $CMD --tag "${TAG}" --file "${THIS_DIR}"/Dockerfile -- "${temp_dir}"
+
+echo "Built docker image: ${TAG}"
+docker image ls "${TAG}"

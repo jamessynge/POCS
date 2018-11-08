@@ -79,7 +79,6 @@ RUN PANGROUP=$pan_group /workdir/run_phase_2_create_pandir.sh && \
 # and user. A macro could be useful here. Or just wait until things are stable
 # and collapse operations into a very few scripts.
 ################################################################################
-
 # As PANUSER, install miniconda, but no additional packages.
 
 USER root
@@ -90,6 +89,7 @@ RUN APT_PROXY_PORT=$apt_proxy_port /workdir/run_phase_3_miniconda_base.sh
 USER root
 RUN rm -rf /workdir
 
+################################################################################
 # Create the panoptes environment.
 
 COPY run_phase_4_bare_panoptes_env.sh /workdir/
@@ -99,6 +99,7 @@ RUN /workdir/run_phase_4_bare_panoptes_env.sh
 USER root
 RUN rm -rf /workdir
 
+################################################################################
 # Load the panoptes environment with packages.
 
 COPY run_phase_5_grow_panoptes_env.sh *.conda-channel-packages.txt /workdir/
@@ -108,68 +109,30 @@ RUN /workdir/run_phase_5_grow_panoptes_env.sh
 USER root
 RUN rm -rf /workdir
 
-# Remove tarballs and package versions downloaded but not in use.
+################################################################################
+# Install pip packages.
 
-COPY run_phase_6_conda_clean.sh /workdir/
+COPY run_phase_6_pip_install.sh requirements.txt /workdir/
 RUN chown -R $pan_user:$pan_group /workdir
 USER $PANUSER
-RUN /workdir/run_phase_6_conda_clean.sh
+RUN /workdir/run_phase_6_pip_install.sh
 USER root
 RUN rm -rf /workdir
 
-
-RUN exit 1
-
 ################################################################################
-# Now install dependencies that are more likely to change (both the actual list
-# of packages, their versions and installation flags).
+# Remove tarballs downloaded for installation, but no longer needed.
 
-COPY run_phase_2_apt_extras.sh .
-RUN ./run_phase_2_apt_extras.sh && rm run_phase_2_apt_extras.sh
+COPY run_phase_7_conda_clean.sh /workdir/
+RUN chown -R $pan_user:$pan_group /workdir
+USER $PANUSER
+RUN /workdir/run_phase_7_conda_clean.sh
+USER root
+RUN rm -rf /workdir
 
-################################################################################
-# Install miniconda and create the panoptes environment.
-# This is broken up into multiple commands simply to aid in debugging the
-# different steps of the build, exploiting docker's layer caching.
+# Done!
 
-COPY *.conda-channel-packages.txt requirements.txt \
-     install-miniconda.sh install-functions.sh
-
-# First just get miniconda and the panoptes environment created.
-RUN DO_INSTALL_CONDA_PACKAGES=0 DO_PIP_REQUIREMENTS=0 \
-    ./install-miniconda.sh
-
-# Then install conda packages, but not pip packages.
-RUN DO_INSTALL_CONDA_PACKAGES=1 DO_PIP_REQUIREMENTS=0 \
-    REQUIREMENTS_PATH=./requirements.txt \
-    ./install-miniconda.sh
-
-# Now install the pip packages.
-RUN DO_INSTALL_CONDA_PACKAGES=0 DO_PIP_REQUIREMENTS=1 \
-    REQUIREMENTS_PATH=./requirements.txt \
-    ./install-miniconda.sh
-
-################################################################################
-# Copy the astrometry indices into place.
-
-RUN rm -rf /usr/share/astrometry
-COPY --from=panoptes/astrometry-indices /var/panoptes/astrometry/data/* /usr/share/astrometry/
-
-################################################################################
-# Copy in all the files from the context, which should be small in total size.
-COPY * ./
-
-################################################################################
-# Create the directories that the installer expects to be there.
-RUN ./create-core-panoptes-directories.sh
-
-# This just sets up the environment variables and shell profiles for the user.
-RUN ./install-dependencies.sh \
-        --no-apt-get --no-mongodb --no-conda --no-conda-packages \
-        --no-astrometry --no-astrometry-indices --no-pip-requirements
-
-WORKDIR $POCS
-
-RUN rm -rf /root/.cache /root/.conda /workdir
+RUN rm -rf /root/.cache /root/.conda
+WORKDIR $pan_dir
+USER $pan_user
 
 CMD ["/bin/bash"]
