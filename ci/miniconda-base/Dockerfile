@@ -15,7 +15,7 @@ ARG apt_proxy_port=
 ARG pan_dir=/var/panoptes
 ARG pan_user=root
 ARG pan_user_id=
-ARG pan_group=
+ARG pan_group=root
 ARG pan_group_id=
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
@@ -60,12 +60,11 @@ RUN ./run_phase_1_apt_deps.sh && rm run_phase_1_apt_deps.sh
 
 COPY run_phase_2_create_pandir.sh .
 RUN PANGROUP=$pan_group ./run_phase_2_create_pandir.sh && rm run_phase_2_create_pandir.sh
-RUN ls -ld $PANDIR
-RUN ls -l $PANDIR
 
 ################################################################################
 # Cleanup the workdir used as user root, switch to operating as PANUSER in
-# /var/panoptes.
+# /var/panoptes. Note that COPY does so as root:root unless you tell it
+# otherwise.
 
 RUN rm -rf /workdir
 USER $PANUSER
@@ -74,10 +73,7 @@ WORKDIR /var/panoptes
 ################################################################################
 # As PANUSER, install miniconda, but no additional packages.
 
-RUN ls -la
-
-COPY run_phase_3_miniconda_base.sh .
-RUN ls -la
+COPY --chown=$pan_user:$pan_group run_phase_3_miniconda_base.sh .
 RUN ./run_phase_3_miniconda_base.sh && rm run_phase_3_miniconda_base.sh
 
 RUN exit 1
