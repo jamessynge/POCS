@@ -93,18 +93,18 @@ INSTALL_LOGS_DIR="${PANDIR}/logs/install/${TIMESTAMP}"
 SHELL_RC="${HOME}/.bashrc"
 PANOPTES_ENV_SH="${PANDIR}/set-panoptes-env.sh"
 
-# Export these so they can be accessed in install-miniconda.sh and
-# other install scripts executed by this one.
+# Export these so they can be accessed in by install scripts executed
+# by this script.
 export PANDIR POCS PAWS PANLOG PANUSER
+export DO_APT_GET=1
+export DO_MONGODB=1
 export DO_CONDA=1
 export DO_REBUILD_CONDA_ENV=0
 export DO_INSTALL_CONDA_PACKAGES=1
+export DO_ASTROMETRY=1
+export DO_ASTROMETRY_INDICES=1
 export DO_PIP_REQUIREMENTS=1
 
-DO_APT_GET=1
-DO_MONGODB=1
-DO_ASTROMETRY=1
-DO_ASTROMETRY_INDICES=1
 DO_RUN_ONE_FUNCTION=""
 
 #-------------------------------------------------------------------------------
