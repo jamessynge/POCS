@@ -10,6 +10,8 @@
 # Not including astrometry-data-* because it is not based on
 # the 2MASS catalog, but instead the Tycho catalog, and our
 # tests fail with it.
+# NOTE: This doesn't work on travis as it requires a newer OS than
+# Ubuntu 16.04, the latest available on travis.
 astrometry.net
 
 # dcraw decodes Canon raw images. Not sure if needed for testing POCS
