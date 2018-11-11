@@ -1,8 +1,19 @@
-# This file contains a list of apt packages to install.
+# This file contains a list of apt packages to install. We prefer
+# to install using conda or pip because installing apt packages
+# requires root privileges. OTOH, we prefer an apt package to building
+# the software from source (e.g. astrometry.net).
+#
 # Lines starting with # are comments as are blank lines,
 # and # starts trailing comments.
 
-# dcraw decodes Canon raw images
+# Astrometry (image to celestial coordinates).
+# Not including astrometry-data-* because it is not based on
+# the 2MASS catalog, but instead the Tycho catalog, and our
+# tests fail with it.
+astrometry.net
+
+# dcraw decodes Canon raw images. Not sure if needed for testing POCS
+# (e.g. for continuous integration), or just for running a scope.
 dcraw
 
 # gphoto2 enables remote control of cameras, including the Canon DSLRs that
@@ -13,25 +24,17 @@ dcraw
 # see: https://github.com/gonzalo/gphoto2-updater
 gphoto2
 
-# Packages needed according to http://astrometry.net/doc/build.html
-libbz2-dev
-libbz2-dev
+# Not clear if we need to specify libcfitsio-dev, or if installing
+# libcfitsio-bin and astrometry.net will suffice.
 libcfitsio-dev
-libjpeg-dev
-libnetpbm10-dev
-libpng-dev
-netpbm
-python-dev
-python-numpy
-python-pyfits
-swig
-zlib1g-dev
 
 # Cairo is a graphics library, and matplotlib can use it as a backend
 # for rendering.
-libcairo2-dev 
+# TODO Evaluate installing conda package.
+libcairo2-dev
 
 # exiftool is used in a couple of places to extract info from the .cr2 file
+# TODO Evaluate exifread (available via conda) as an alternative.
 exiftool 
 
 # We use cfitsio command line tools (e.g. fpack) from POCS, in addition to the
@@ -44,16 +47,18 @@ openssh-client
 openssh-server
 
 # Graphviz is used for rendering the state machine of POCS.
+# Not sure if these are needed for testing POCS, or just for running.
+# TODO Evaluate installing conda 'graphviz' package.
 graphviz
 libgraphviz-dev
 
-# Linux tool used during building and installing software (e.g. astrometry).
-pkg-config
-
 # Improves interaction with pocs_shell (via readline).
+# TODO Evaluate installing conda 'ncurses' package.
 libncurses5-dev
 
 # These support the Python package "Shapely", used in PIAA (called from POCS).
+# TODO Check on whether we still need these included in the POCS apt packages.
+# TODO Evaluate the conda 'geos' package.
 libgeos-3.*
 libgeos-c1v5
 libgeos-dev
@@ -64,6 +69,7 @@ byobu
 tmux
 
 # Used for creating a timelapse.
+# TODO Evaluate the conda 'ffmpeg' package.
 ffmpeg
 
 # Used for colorizing log files.
@@ -72,6 +78,19 @@ grc
 # GNU coreutils provides basic commands that we depend on (echo, ls), and is
 # almost certainly already installed, but let's make sure.
 coreutils
+
+# apt-utils is installed on ubuntu by default, but not on debian
+# slim docker images.
+apt-utils
+
+# Time zone and daylight-saving time data.
+# Would our needs be satisfied by the 'pytzdata' conda package?
+tzdata
+
+# Tools needed for installing miniconda.
+bzip2
+ca-certificates
+wget
 
 # Want git for upgrading to the latest version. Probably already installed
 # but not necessarily (i.e. it is possible to download a zip of POCS, which
