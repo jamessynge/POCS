@@ -53,7 +53,7 @@ def config(images_dir, messaging_ports):
     result['messaging']['cmd_port'] = messaging_ports['cmd_ports'][0]
     result['messaging']['msg_port'] = messaging_ports['msg_ports'][0]
 
-    get_root_logger().debug('config fixture: {!r}', result)
+    get_root_logger().debug(f'config fixture: {result!r}')
     return result
 
 
